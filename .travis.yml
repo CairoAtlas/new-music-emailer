@@ -1,0 +1,26 @@
+language: python
+python:
+  - "3.7"
+git:
+  depth: false
+
+# safe list
+branches:
+  only:
+  - master
+
+install:
+  - pip install -r requirements.txt
+
+script:
+  - pylint $TRAVIS_BUILD_DIR/src/function.py
+  - cd $TRAVIS_BUILD_DIR/src
+  - python -m pytest $TRAVIS_BUILD_DIR/tests
+  - python ldist setup.py
+
+deploy:
+  provider: lambda
+  function_name: $NEW_MUSIC_EMAILER_FUNCTION_NAME"
+  region: "us-east-1"
+  role: $NEW_MUSIC_EMAILER_ROLE
+  handler_name: "handler"

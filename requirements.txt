@@ -1,0 +1,6 @@
+pylint
+pytest
+pytest-env
+pytest-cov
+requests-mock
+moto
