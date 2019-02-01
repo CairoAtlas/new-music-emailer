@@ -162,8 +162,8 @@ def create_artist_new_music_line(spotify_artist_music):
     for item in spotify_artist_music:
         if item['thumbnail']:
             artist_string = '<p><img src="{}" width="{}" height="{}" /> {} released on {}--{}</p>\n'
-            body += artist_string.format(item['thumbnail'][0]['url'], item['thumbnail'][0]['width'], item['thumbnail'][0][
-                'height'], item['name'], item['releaseDate'], item['url'])
+            body += artist_string.format(item['thumbnail'][0]['url'], item['thumbnail'][0]['width'],
+                                         item['thumbnail'][0]['height'], item['name'], item['releaseDate'], item['url'])
 
     return body
 
