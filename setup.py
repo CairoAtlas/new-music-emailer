@@ -86,7 +86,7 @@ setup(
     packages=find_packages('src'),
 
     include_package_data=True,
-    lambda_package='src/lambda_function',
+    lambda_package=lambda_package,
 
     setup_requires=['lambda-setuptools']
 )
