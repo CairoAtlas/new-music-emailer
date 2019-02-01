@@ -1,3 +1,5 @@
+"""Lambda that reads from a table and sends emails out for new music within the last 7 days. Invoked daily"""
+
 # Standard library imports
 import base64
 import datetime
@@ -31,6 +33,7 @@ HTML_END = """
 
 
 def handler(event, context):
+    """Handler function that acts as a controller function"""
     LOGGER.debug(event)
     LOGGER.debug(context)
     records = get_users()
@@ -62,6 +65,7 @@ def get_artists(records):
 
 
 def authorize():
+    """Get spotify authorization token"""
     encoded_auth = base64.b64encode(
         (os.environ["SPOTIFY_CLIENT_ID"] + ':' + os.environ["SPOTIFY_CLIENT_SECRET"]).encode())
     headers = {
@@ -86,6 +90,7 @@ def get_new_music_from_spotify(artists, spotify_authorization):
 
 
 def get_artist_ids_from_spotify(artists, spotify_authorization):
+    """Get artist IDs to search for artists in Spotify"""
     spotify_artists = dict()
     url = os.environ['SPOTIFY_SEARCH_URL']
     headers = {
@@ -103,6 +108,7 @@ def get_artist_ids_from_spotify(artists, spotify_authorization):
 
 
 def get_new_music_for_artist(artist_id, spotify_authorization):
+    """Use Spotify ID to collect new singles for artists"""
     url = os.environ['SPOTIFY_ARTISTS_URL'].format(artist_id)
     headers = {
         'Authorization': f'Bearer {spotify_authorization["access_token"]}'
@@ -115,6 +121,7 @@ def get_new_music_for_artist(artist_id, spotify_authorization):
 
 
 def filter_music_for_last_seven_days(spotify_response):
+    """Filters music from last seven days and builds a response"""
     new_music = list()
     for item in spotify_response['items']:
         if item['release_date'] >= (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'):
@@ -132,6 +139,7 @@ def filter_music_for_last_seven_days(spotify_response):
 
 
 def is_image_size_64(image):
+    """Checks for 64x64 pixel image, returns boolean"""
     return image['height'] == 64 and image['width'] == 64
 
 
@@ -149,15 +157,13 @@ def build_email_body_for_user(artists, spotify_responses):
 
 
 def create_artist_new_music_line(spotify_artist_music):
+    """Build HTML line with image and text for email"""
     body = ''
     for item in spotify_artist_music:
         if item['thumbnail']:
             artist_string = '<p><img src="{}" width="{}" height="{}" /> {} released on {}--{}</p>\n'
             body += artist_string.format(item['thumbnail'][0]['url'], item['thumbnail'][0]['width'], item['thumbnail'][0][
                 'height'], item['name'], item['releaseDate'], item['url'])
-        else:
-            artist_string = '<p>[No thumbnail] {} released on {}--{}</p>\n'
-            body += artist_string.format(item['name'], item['releaseDate'], item['url'])
 
     return body
 
