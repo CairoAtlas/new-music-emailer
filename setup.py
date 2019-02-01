@@ -44,7 +44,7 @@ lambda_author_email = 'samuelmahr@gmail.com'
 lambda_install_requires = ['requests']
 
 if 'TRAVIS_BUILD_DIR' in os.environ:
-    lambda_package = os.environ['TRAVIS_BUILD_DIR'] + 'src/lambda_function'
+    lambda_package = os.environ['TRAVIS_BUILD_DIR'] + '/src/lambda_function'
 else:
     lambda_package = 'src/lambda_function'
 
