@@ -1,5 +1,6 @@
 # To use a consistent encoding
 from codecs import open
+import os
 from os import path
 
 from setuptools import setup, find_packages
@@ -42,6 +43,11 @@ lambda_author_email = 'samuelmahr@gmail.com'
 # https://packaging.python.org/en/latest/requirements.html
 lambda_install_requires = ['requests']
 
+if 'TRAVIS_BUILD_DIR' in os.environ:
+    lambda_package = os.environ['TRAVIS_BUILD_DIR'] + 'src/lambda_function'
+else:
+    lambda_package = 'src/lambda_function'
+
 ##############################################
 # CHANGES BELOW HERE ARE MADE AT YOUR OWN RISK
 ##############################################
@@ -80,7 +86,6 @@ setup(
     packages=find_packages('src'),
 
     include_package_data=True,
-
     lambda_package='src/lambda_function',
 
     setup_requires=['lambda-setuptools']
