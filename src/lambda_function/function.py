@@ -1,5 +1,3 @@
-"""Gets new music within the last week for artists saved to a dynamo table per user"""
-
 # Standard library imports
 import base64
 import datetime
@@ -16,6 +14,20 @@ USER_FAVORITES_TABLE = boto3.resource('dynamodb').Table(os.environ['USER_FAVORIT
 SES_CLIENT = boto3.client('ses')
 LOGGER = logging.getLogger()
 LOGGER.setLevel(logging.INFO)
+HTML_START = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+"""
+
+HTML_END = """
+</body>
+</html>
+"""
 
 
 def handler(event, context):
@@ -31,7 +43,7 @@ def handler(event, context):
         email_body = build_email_body_for_user(record['artists'], spotify_responses)
         send_email(email_body, record['email'])
 
-    return json.dumps({'message': 'all done :)'})
+    return {'message': 'all done :)'}
 
 
 def get_users():
@@ -43,27 +55,21 @@ def get_users():
 def get_artists(records):
     """Get a set of artists so there is only one spotify call per artist"""
     artists = set()
-    print(records)
     for record in records:
-        print(record)
         artists.update(record['artists'])
 
     return artists
 
 
 def authorize():
-    encoded_auth = base64.b64encode((os.environ["SPOTIFY_CLIENT_ID"] + ':' + os.environ["SPOTIFY_CLIENT_SECRET"]).encode())
-    print(str(encoded_auth))
+    encoded_auth = base64.b64encode(
+        (os.environ["SPOTIFY_CLIENT_ID"] + ':' + os.environ["SPOTIFY_CLIENT_SECRET"]).encode())
     headers = {
-        'Authorization': 'Basic {}'.format(encoded_auth.decode("utf-8") )
-    }
-    LOGGER.info(json.dumps(headers))
-    data = {
-        'grant_type': 'client_credentials'
+        'Authorization': 'Basic {}'.format(encoded_auth.decode("utf-8"))
     }
 
-    response = requests.post(os.environ['SPOTIFY_AUTH_URL'], data={'grant_type': 'client_credentials'}, headers=headers).text
-    LOGGER.info(response)
+    response = requests.post(os.environ['SPOTIFY_AUTH_URL'], data={'grant_type': 'client_credentials'},
+                             headers=headers).text
     return json.loads(response)
 
 
@@ -86,11 +92,8 @@ def get_artist_ids_from_spotify(artists, spotify_authorization):
         'Authorization': f'Bearer {spotify_authorization["access_token"]}'
     }
     for artist in artists:
-        params = f'?q={artist}&type=artist&items=1'
-        url += params
-        print(url)
+        params = '?q={}&type=artist&items=1'.format(artist)
         response = json.loads(requests.get(url + params, headers=headers).text)
-        print(response)
         if not response['artists'].get('items', []):
             spotify_artists.update({artist: None})
         else:
@@ -104,7 +107,7 @@ def get_new_music_for_artist(artist_id, spotify_authorization):
     headers = {
         'Authorization': f'Bearer {spotify_authorization["access_token"]}'
     }
-    params = '?include_groups=single,album'
+    params = '?include_groups=single'
 
     response = json.loads(requests.get(url + params, headers=headers).text)
 
@@ -115,38 +118,53 @@ def filter_music_for_last_seven_days(spotify_response):
     new_music = list()
     for item in spotify_response['items']:
         if item['release_date'] >= (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'):
+            images = item['images']
+            thumbnail = [image for image in images if is_image_size_64(image)]
             new_music.append({
                 'name': item.pop('name'),
                 'type': item.pop('type'),
                 'releaseDate': item['release_date'],
-                'url': item['external_urls'].pop('spotify')
+                'url': item['external_urls'].pop('spotify'),
+                'thumbnail': thumbnail
             })
 
     return new_music
 
 
+def is_image_size_64(image):
+    return image['height'] == 64 and image['width'] == 64
+
+
 def build_email_body_for_user(artists, spotify_responses):
     """Build email body for new music or no new music for artists"""
     email_body = ''
+    no_music_string = '<p>No new music found for %s today<p>\n'
     for artist in artists:
         if artist not in spotify_responses:
-            email_body += 'No new music found for {} today\n'.format(artist)
+            email_body += (no_music_string % artist)
         else:
-            email_body += create_artist_new_music_line(artist, spotify_responses[artist])
+            email_body += create_artist_new_music_line(spotify_responses[artist])
 
     return email_body
 
 
-def create_artist_new_music_line(artist, spotify_artist_music):
-    body = f'{artist}\n'
+def create_artist_new_music_line(spotify_artist_music):
+    body = ''
     for item in spotify_artist_music:
-        body += f'\t{spotify_artist_music["type"]} {spotify_artist_music["name"]} released on {spotify_artist_music["releaseDate"]}. {spotify_artist_music["url"]}\n'
+        if item['thumbnail']:
+            artist_string = '<p><img src="{}" width="{}" height="{}" /> {} released on {}--{}</p>\n'
+            body += artist_string.format(item['thumbnail'][0]['url'], item['thumbnail'][0]['width'], item['thumbnail'][0][
+                'height'], item['name'], item['releaseDate'], item['url'])
+        else:
+            artist_string = '<p>[No thumbnail] {} released on {}--{}</p>\n'
+            body += artist_string.format(item['name'], item['releaseDate'], item['url'])
 
     return body
 
 
 def send_email(email_body, email_to):
     """Send email through SES"""
+    html = f'{HTML_START}{email_body}{HTML_END}'
     try:
         SES_CLIENT.send_email(
             Source=os.environ['SENDER_EMAIL'],
@@ -160,8 +178,8 @@ def send_email(email_body, email_to):
                     'Data': 'Newest Music in Last 7 Days (Spotify)',
                 },
                 'Body': {
-                    'Text': {
-                        'Data': email_body,
+                    'Html': {
+                        'Data': html,
                     }
                 }
             }
