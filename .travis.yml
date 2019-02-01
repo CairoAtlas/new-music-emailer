@@ -14,10 +14,10 @@ install:
   - pip install -r requirements.txt
 
 script:
-  - pylint $TRAVIS_BUILD_DIR/src/function.py
+  - pylint $TRAVIS_BUILD_DIR/src/lambda_function/function.py
   - cd $TRAVIS_BUILD_DIR/src
   - python -m pytest $TRAVIS_BUILD_DIR/tests
-  - python ldist setup.py
+  - python setup.py ldist --include-version=False
 
 deploy:
   provider: lambda
@@ -25,3 +25,4 @@ deploy:
   region: "us-east-1"
   role: $NEW_MUSIC_EMAILER_ROLE
   handler_name: "handler"
+  zip: $TRAVIS_BUILD_DIR/dist/new-music-emailer.zip
