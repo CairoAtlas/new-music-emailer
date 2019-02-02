@@ -1,6 +1,5 @@
 # To use a consistent encoding
 from codecs import open
-import os
 from os import path
 
 from setuptools import setup, find_packages
@@ -82,7 +81,7 @@ setup(
     packages=find_packages('src'),
 
     include_package_data=True,
-    lambda_package=src/lambda_function,
+    lambda_package='src/lambda_function',
 
     setup_requires=['lambda-setuptools']
 )
