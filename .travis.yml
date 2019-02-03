@@ -19,7 +19,7 @@ install:
 script:
   - pylint $TRAVIS_BUILD_DIR/src/lambda_function/function.py
   - cd $TRAVIS_BUILD_DIR/src
-  - python -m pytest $TRAVIS_BUILD_DIR/tests
+  - python -m pytest $TRAVIS_BUILD_DIR/tests --cov-report term --cov=lambda_function/function.py
   - cd ..
   - python setup.py ldist --include-version=False
 
