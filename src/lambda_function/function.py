@@ -38,6 +38,8 @@ def handler(event, context):
     LOGGER.debug(context)
     records = get_users()
     artists = get_artists(records)
+    if not artists:
+        return {'message': 'Nothing to search :/'}
 
     spotify_authorization = authorize()
     spotify_responses = get_new_music_from_spotify(artists, spotify_authorization)
@@ -146,11 +148,8 @@ def is_image_size_64(image):
 def build_email_body_for_user(artists, spotify_responses):
     """Build email body for new music or no new music for artists"""
     email_body = ''
-    no_music_string = '<p>No new music found for %s today<p>\n'
     for artist in artists:
-        if artist not in spotify_responses:
-            email_body += (no_music_string % artist)
-        else:
+        if artist in spotify_responses:
             email_body += create_artist_new_music_line(spotify_responses[artist])
 
     return email_body
@@ -164,7 +163,7 @@ def create_artist_new_music_line(spotify_artist_music):
             artist_string = '<p><img src="{}" width="{}" height="{}" /> {} released on {}--{}</p>\n'
             body += artist_string.format(item['thumbnail'][0]['url'], item['thumbnail'][0]['width'],
                                          item['thumbnail'][0]['height'], item['name'], item['releaseDate'], item['url'])
-
+    LOGGER.info('body: %s', body)
     return body
 
 
