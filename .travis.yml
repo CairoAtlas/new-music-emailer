@@ -29,4 +29,5 @@ deploy:
   region: "us-east-1"
   role: $NEW_MUSIC_EMAILER_ROLE
   handler_name: "handler"
+  runtime: "python3.7"
   zip: $TRAVIS_BUILD_DIR/dist/new-music-emailer.zip
