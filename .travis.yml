@@ -23,12 +23,12 @@ script:
   - cd ..
   - python setup.py ldist --include-version=False
 
-deploy:
-  provider: lambda
-  function_name: $NEW_MUSIC_EMAILER_FUNCTION_NAME
-  region: "us-east-1"
-  role: $NEW_MUSIC_EMAILER_ROLE
-  handler_name: "handler"
-  module_name: "function"
-  runtime: "python3.7"
-  zip: $TRAVIS_BUILD_DIR/dist/new-music-emailer.zip
+# deploy:
+#   provider: lambda
+#   function_name: $NEW_MUSIC_EMAILER_FUNCTION_NAME
+#   region: "us-east-1"
+#   role: $NEW_MUSIC_EMAILER_ROLE
+#   handler_name: "handler"
+#   module_name: "function"
+#   runtime: "python3.7"
+#   zip: $TRAVIS_BUILD_DIR/dist/new-music-emailer.zip
