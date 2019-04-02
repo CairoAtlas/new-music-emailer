@@ -40,6 +40,11 @@ jobs:
           key: v1-dependencies-{{ checksum "requirements.txt" }}
 
       - run:
+          name: run pylint
+          command: |
+            pylint src/lambda_function/function.py
+
+      - run:
           name: run tests
           command: |
             . venv/bin/activate
