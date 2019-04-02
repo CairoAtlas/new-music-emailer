@@ -54,4 +54,4 @@ jobs:
       - run:
           name: deploy to lambda
           command: |
-            python setup.py ldist --include-version=False lupdate --access-key=$AWS_ACCESS_KEY_ID --secret-key=$AWS_SECRET_ACCESS_KEY --function-names=$CIRCLE_PROJECT_REPONAME
+            python setup.py ldist --include-version=False lupload --access-key=$AWS_ACCESS_KEY_ID --secret-key=$AWS_SECRET_ACCESS_KEY s3-bucket=$S3_BUCKET lupdate --function-names=$CIRCLE_PROJECT_REPONAME
