@@ -42,6 +42,7 @@ jobs:
       - run:
           name: run pylint
           command: |
+            . venv/bin/activate
             pylint src/lambda_function/function.py
 
       - run:
